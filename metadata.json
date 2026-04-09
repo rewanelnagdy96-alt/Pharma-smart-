@@ -1,0 +1,5 @@
+{
+  "name": "Remix: PharmaSmart",
+  "description": "A high-efficiency pharmacy management app featuring inventory tracking, shortage logging, P2P ledger, and AI-powered medication alternatives.",
+  "requestFramePermissions": []
+}

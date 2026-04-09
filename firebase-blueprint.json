@@ -1,0 +1,59 @@
+{
+  "entities": {
+    "Medicine": {
+      "title": "Medicine",
+      "description": "Inventory item for a medication",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "boxQty": { "type": "number" },
+        "stripQty": { "type": "number" },
+        "minBoxQty": { "type": "number" },
+        "price": { "type": "number" },
+        "authorUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "boxQty", "stripQty", "price", "authorUid", "createdAt"]
+    },
+    "Shortage": {
+      "title": "Shortage",
+      "description": "Logged medication shortage",
+      "type": "object",
+      "properties": {
+        "medicineName": { "type": "string" },
+        "isAvailable": { "type": "boolean" },
+        "authorUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["medicineName", "isAvailable", "authorUid", "createdAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "P2P Ledger transaction between pharmacies",
+      "type": "object",
+      "properties": {
+        "pharmacyName": { "type": "string" },
+        "type": { "type": "string", "enum": ["owe_them", "owe_us"] },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "authorUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["pharmacyName", "type", "amount", "authorUid", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/medicines/{medicineId}": {
+      "schema": "Medicine",
+      "description": "Medicines in inventory"
+    },
+    "/shortages/{shortageId}": {
+      "schema": "Shortage",
+      "description": "Shortage logs"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "P2P transactions"
+    }
+  }
+}

@@ -1,0 +1,146 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return true;
+    }
+    
+    function isOwner() {
+      return isAuthenticated();
+    }
+    
+    function isCreatingWithOwnerUid() {
+      return isAuthenticated();
+    }
+    
+    function isAuthorUidUnchanged() {
+      return true;
+    }
+    
+    function isCreatedAtUnchanged() {
+      return !('createdAt' in request.resource.data) || request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function isValidMedicine(data) {
+      return hasOnlyAllowedFields(['name', 'boxQty', 'stripQty', 'minBoxQty', 'price', 'authorUid', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.boxQty is number && data.boxQty >= 0 &&
+             data.stripQty is number && data.stripQty >= 0 &&
+             (!('minBoxQty' in data) || (data.minBoxQty is number && data.minBoxQty >= 0)) &&
+             data.price is number && data.price >= 0 &&
+             data.authorUid is string && data.authorUid.size() > 0 &&
+             data.createdAt is string;
+    }
+    
+    function isValidShortage(data) {
+      return hasOnlyAllowedFields(['medicineName', 'form', 'isAvailable', 'category', 'isUrgent', 'authorUid', 'createdAt']) &&
+             data.medicineName is string && data.medicineName.size() > 0 && data.medicineName.size() < 100 &&
+             (!('form' in data) || (data.form is string && data.form.size() <= 50)) &&
+             data.isAvailable is bool &&
+             data.category in ['medicine', 'supply'] &&
+             data.isUrgent is bool &&
+             data.authorUid is string && data.authorUid.size() > 0 &&
+             data.createdAt is string;
+    }
+    
+    function isValidTransaction(data) {
+      return hasOnlyAllowedFields(['entityName', 'category', 'type', 'amount', 'description', 'authorUid', 'createdAt']) &&
+             data.entityName is string && data.entityName.size() > 0 && data.entityName.size() < 100 &&
+             data.category in ['p2p', 'customer'] &&
+             data.type in ['owe_them', 'owe_us'] &&
+             data.amount is number && data.amount > 0 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 500)) &&
+             data.authorUid is string && data.authorUid.size() > 0 &&
+             data.createdAt is string;
+    }
+
+    function isValidShiftTransaction(data) {
+      return hasOnlyAllowedFields(['shiftNumber', 'amount', 'type', 'description', 'authorUid', 'createdAt']) &&
+             data.shiftNumber is number && data.shiftNumber >= 1 && data.shiftNumber <= 4 &&
+             data.amount is number &&
+             (!('type' in data) || data.type in ['income', 'expense']) &&
+             data.description is string && data.description.size() <= 500 &&
+             data.authorUid is string && data.authorUid.size() > 0 &&
+             data.createdAt is string;
+    }
+
+    function isValidCompany(data) {
+      return hasOnlyAllowedFields(['name', 'authorUid', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.authorUid is string && data.authorUid.size() > 0 &&
+             data.createdAt is string;
+    }
+    
+    function isValidInvoice(data) {
+      return hasOnlyAllowedFields(['companyId', 'imageUrl', 'items', 'authorUid', 'createdAt']) &&
+             data.companyId is string && data.companyId.size() > 0 &&
+             (data.imageUrl == null || data.imageUrl is string) &&
+             data.items is list &&
+             data.authorUid is string && data.authorUid.size() > 0 &&
+             data.createdAt is string;
+    }
+
+    function isValidDeletedItem(data) {
+      return hasOnlyAllowedFields(['originalId', 'collectionName', 'data', 'deletedAt', 'authorUid']) &&
+             data.originalId is string &&
+             data.collectionName is string &&
+             data.data is map &&
+             data.deletedAt is string &&
+             data.authorUid is string;
+    }
+
+    match /medicines/{medicineId} {
+      allow read: if isOwner();
+      allow create: if isCreatingWithOwnerUid() && isValidMedicine(request.resource.data);
+      allow update: if isOwner() && isAuthorUidUnchanged() && isCreatedAtUnchanged() && isValidMedicine(request.resource.data);
+      allow delete: if isOwner();
+    }
+
+    match /shortages/{shortageId} {
+      allow read: if isOwner();
+      allow create: if isCreatingWithOwnerUid() && isValidShortage(request.resource.data);
+      allow update: if isOwner() && isAuthorUidUnchanged() && isCreatedAtUnchanged() && isValidShortage(request.resource.data);
+      allow delete: if isOwner();
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isOwner();
+      allow create: if isCreatingWithOwnerUid() && isValidTransaction(request.resource.data);
+      allow update: if isOwner() && isAuthorUidUnchanged() && isCreatedAtUnchanged() && isValidTransaction(request.resource.data);
+      allow delete: if isOwner();
+    }
+
+    match /shiftTransactions/{transactionId} {
+      allow read: if isOwner();
+      allow create: if isCreatingWithOwnerUid() && isValidShiftTransaction(request.resource.data);
+      allow update: if isOwner() && isAuthorUidUnchanged() && isCreatedAtUnchanged() && isValidShiftTransaction(request.resource.data);
+      allow delete: if isOwner();
+    }
+
+    match /companies/{id} {
+      allow read: if isOwner();
+      allow create: if isCreatingWithOwnerUid() && isValidCompany(request.resource.data);
+      allow update: if isOwner() && isAuthorUidUnchanged() && isCreatedAtUnchanged() && isValidCompany(request.resource.data);
+      allow delete: if isOwner();
+    }
+
+    match /invoices/{id} {
+      allow read: if isOwner();
+      allow create: if isCreatingWithOwnerUid() && isValidInvoice(request.resource.data);
+      allow update: if isOwner() && isAuthorUidUnchanged() && isCreatedAtUnchanged() && isValidInvoice(request.resource.data);
+      allow delete: if isOwner();
+    }
+
+    match /deletedItems/{id} {
+      allow read: if isOwner();
+      allow create: if isCreatingWithOwnerUid() && isValidDeletedItem(request.resource.data);
+      allow delete: if isOwner();
+    }
+  }
+}
