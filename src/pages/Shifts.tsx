@@ -60,7 +60,7 @@ export default function Shifts() {
           amount: parsedAmount,
           type: trxType,
           description,
-          authorUid: 'local-user',
+          authorUid: auth.currentUser?.uid || 'local-user',
           createdAt: new Date().toISOString()
         };
         await addDoc(collection(db, 'shiftTransactions'), trx);

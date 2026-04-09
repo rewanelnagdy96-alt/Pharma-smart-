@@ -66,7 +66,7 @@ export default function Invoices() {
     try {
       const company: Company = {
         name: companyName.trim(),
-        authorUid: 'local-user',
+        authorUid: auth.currentUser?.uid || 'local-user',
         createdAt: new Date().toISOString()
       };
       await addDoc(collection(db, 'companies'), company);
@@ -142,7 +142,7 @@ export default function Invoices() {
         companyId: selectedCompany.id!,
         imageUrl: image,
         items: validItems.map(i => ({ name: i.name.trim(), form: i.form || undefined })),
-        authorUid: 'local-user',
+        authorUid: auth.currentUser?.uid || 'local-user',
         createdAt: new Date().toISOString()
       };
       

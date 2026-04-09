@@ -54,7 +54,7 @@ export default function Ledger() {
           type: trxData.type,
           amount: Number(convertArabicToEnglishNumbers(trxData.amount)),
           description: trxData.description,
-          authorUid: 'local-user',
+          authorUid: auth.currentUser?.uid || 'local-user',
           createdAt: new Date().toISOString()
         };
         const docRef = doc(collection(db, 'transactions'));

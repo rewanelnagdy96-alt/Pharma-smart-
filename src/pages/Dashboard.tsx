@@ -67,7 +67,7 @@ export default function Dashboard() {
         isAvailable: false,
         category: category,
         isUrgent: false,
-        authorUid: 'local-user',
+        authorUid: auth.currentUser?.uid || 'local-user',
         createdAt: new Date().toISOString()
       };
       await addDoc(collection(db, 'shortages'), shortage);

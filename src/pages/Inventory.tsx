@@ -47,7 +47,7 @@ export default function Inventory() {
         stripQty: Number(convertArabicToEnglishNumbers(stripQty)) || 0,
         minBoxQty: 3, // Default low stock alert threshold
         price: Number(convertArabicToEnglishNumbers(price)),
-        authorUid: 'local-user',
+        authorUid: auth.currentUser?.uid || 'local-user',
         createdAt: new Date().toISOString()
       };
       await addDoc(collection(db, 'medicines'), med);
@@ -80,7 +80,7 @@ export default function Inventory() {
           collectionName: 'medicines',
           data: medToDelete,
           deletedAt: new Date().toISOString(),
-          authorUid: 'local-user'
+          authorUid: auth.currentUser?.uid || 'local-user'
         };
         await addDoc(collection(db, 'deletedItems'), deletedItem);
       }
