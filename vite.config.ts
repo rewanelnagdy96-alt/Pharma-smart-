@@ -21,16 +21,7 @@ export default defineConfig(({mode}) => {
       hmr: process.env.DISABLE_HMR !== 'true',
     },
     build: {
-      chunkSizeWarningLimit: 1500,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom', 'react-router'],
-            firebase: ['firebase/app', 'firebase/firestore', 'firebase/auth'],
-            ui: ['lucide-react', 'motion/react']
-          }
-        }
-      }
+      chunkSizeWarningLimit: 2000,
     }
   };
 });
