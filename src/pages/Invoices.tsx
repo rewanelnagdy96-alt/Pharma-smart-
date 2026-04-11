@@ -277,7 +277,12 @@ export default function Invoices() {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-2 text-[#90A4CE] dark:text-slate-400">
                   <FileText size={20} />
-                  <span className="text-sm font-medium">{new Date(invoice.createdAt).toLocaleDateString()}</span>
+                  <span className="text-sm font-medium">
+                    {new Date(invoice.createdAt).toLocaleString(isRtl ? 'ar-EG' : 'en-US', {
+                      year: 'numeric', month: 'short', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit'
+                    })}
+                  </span>
                 </div>
               </div>
               

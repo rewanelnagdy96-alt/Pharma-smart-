@@ -1,17 +1,30 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, NavLink, Link, useLocation } from 'react-router';
-import { LayoutDashboard, Package, AlertTriangle, ArrowLeftRight, Clock, Globe, Moon, Sun, Search, FileText, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Package, AlertTriangle, ArrowLeftRight, Clock as ClockIcon, Globe, Moon, Sun, FileText, Trash2, Settings } from 'lucide-react';
 import { useTranslation, useAppStore } from '../lib/i18n';
 import { Toaster } from 'react-hot-toast';
+import GlobalSearch from './GlobalSearch';
+
+function Clock() {
+  const { isRtl } = useTranslation();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+      {currentTime.toLocaleTimeString(isRtl ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+    </p>
+  );
+}
 
 export default function Layout() {
   const { t, isRtl } = useTranslation();
-  const { toggleLanguage, toggleTheme, theme, searchQuery, setSearchQuery } = useAppStore();
+  const { toggleLanguage, toggleTheme, theme, setSearchQuery } = useAppStore();
   const location = useLocation();
-
-  useEffect(() => {
-    setSearchQuery('');
-  }, [location.pathname, setSearchQuery]);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -27,7 +40,7 @@ export default function Layout() {
     { to: '/shortages', icon: AlertTriangle, label: t('shortages') },
     { to: '/ledger', icon: ArrowLeftRight, label: t('ledger') },
     { to: '/invoices', icon: FileText, label: t('invoices') },
-    { to: '/shifts', icon: Clock, label: t('shifts') },
+    { to: '/shifts', icon: ClockIcon, label: t('shifts') },
   ];
 
   return (
@@ -37,12 +50,18 @@ export default function Layout() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold text-xl shadow-sm">
-              P
+              ص
             </div>
-            <h1 className="text-xl font-bold text-slate-800 dark:text-white">PharmaSmart</h1>
+            <div>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-white">صيدليتي</h1>
+              <Clock />
+            </div>
           </div>
           <div className="flex items-center gap-1">
-            <Link to="/deleted" className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <Link to="/settings" onClick={() => setSearchQuery('')} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+              <Settings size={20} />
+            </Link>
+            <Link to="/deleted" onClick={() => setSearchQuery('')} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
               <Trash2 size={20} />
             </Link>
             <button onClick={toggleTheme} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
@@ -55,16 +74,7 @@ export default function Layout() {
         </div>
         
         {/* Global Search Bar */}
-        <div className="relative">
-          <Search className={`absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRtl ? 'right-4' : 'left-4'}`} size={20} />
-          <input
-            type="text"
-            placeholder={t('searchPlaceholder')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-white transition-colors ${isRtl ? 'pr-12 pl-4' : 'pl-12 pr-4'}`}
-          />
-        </div>
+        <GlobalSearch />
       </header>
 
       {/* Main Content Area */}
@@ -79,6 +89,7 @@ export default function Layout() {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={() => setSearchQuery('')}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${
                   isActive ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'

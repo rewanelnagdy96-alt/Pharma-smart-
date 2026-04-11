@@ -8,6 +8,7 @@ import Ledger from './pages/Ledger';
 import Shifts from './pages/Shifts';
 import Invoices from './pages/Invoices';
 import DeletedItems from './pages/DeletedItems';
+import Settings from './pages/Settings';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="invoices" element={<Invoices />} />
           <Route path="shifts" element={<Shifts />} />
           <Route path="deleted" element={<DeletedItems />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

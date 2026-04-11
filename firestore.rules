@@ -142,5 +142,10 @@ service cloud.firestore {
       allow create: if isCreatingWithOwnerUid() && isValidDeletedItem(request.resource.data);
       allow delete: if isOwner();
     }
+
+    match /settings/{settingId} {
+      allow read: if isOwner();
+      allow write: if isOwner();
+    }
   }
 }

@@ -8,9 +8,11 @@ interface AppState {
   language: Language;
   theme: Theme;
   searchQuery: string;
+  isManagerUnlocked: boolean;
   toggleLanguage: () => void;
   toggleTheme: () => void;
   setSearchQuery: (query: string) => void;
+  setManagerUnlocked: (unlocked: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -19,6 +21,7 @@ export const useAppStore = create<AppState>()(
       language: 'ar', // Default to Arabic as requested
       theme: 'light',
       searchQuery: '',
+      isManagerUnlocked: false,
       toggleLanguage: () => set((state) => ({ language: state.language === 'en' ? 'ar' : 'en' })),
       toggleTheme: () => set((state) => {
         const newTheme = state.theme === 'light' ? 'dark' : 'light';
@@ -30,6 +33,7 @@ export const useAppStore = create<AppState>()(
         return { theme: newTheme };
       }),
       setSearchQuery: (query) => set({ searchQuery: query }),
+      setManagerUnlocked: (unlocked) => set({ isManagerUnlocked: unlocked }),
     }),
     {
       name: 'app-storage',
@@ -130,6 +134,11 @@ export const translations = {
     in: 'In',
     out: 'Out',
     noShiftTransactions: 'No transactions for this shift today.',
+    enterPin: 'Enter Manager PIN',
+    pinPlaceholder: 'Enter 4-digit PIN',
+    unlock: 'Unlock',
+    incorrectPin: 'Incorrect PIN',
+    hidden: 'Hidden',
   },
   ar: {
     dashboard: 'الرئيسية',
@@ -153,7 +162,7 @@ export const translations = {
     pharmacyName: 'الاسم',
     amount: 'المبلغ',
     type: 'النوع',
-    save: 'حفظ',
+    save: 'تم الحفظ بنجاح',
     cancel: 'إلغاء',
     logout: 'تسجيل خروج',
     loading: 'جاري التحميل...',
@@ -222,6 +231,11 @@ export const translations = {
     in: 'دخول',
     out: 'خروج',
     noShiftTransactions: 'لا توجد معاملات لهذا الشيفت اليوم.',
+    enterPin: 'أدخل الرمز السري للمدير',
+    pinPlaceholder: 'أدخل 4 أرقام',
+    unlock: 'فتح',
+    incorrectPin: 'الرمز السري غير صحيح',
+    hidden: 'مخفي',
   }
 };
 
