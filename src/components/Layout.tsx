@@ -44,31 +44,31 @@ export default function Layout() {
   ];
 
   return (
-    <div className={`min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors duration-200 ${isRtl ? 'rtl' : 'ltr'}`} dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className={`min-h-[100dvh] flex flex-col bg-slate-50 dark:bg-slate-950 transition-colors duration-200 ${isRtl ? 'rtl' : 'ltr'}`} dir={isRtl ? 'rtl' : 'ltr'}>
       {/* Top App Bar */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 transition-colors duration-200 px-4 py-3">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 transition-colors duration-200 px-4 py-3 pt-safe pl-safe pr-safe">
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold text-xl shadow-sm">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-sm shrink-0">
               ص
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-800 dark:text-white">صيدليتي</h1>
+              <h1 className="text-lg sm:text-xl font-bold text-slate-800 dark:text-white leading-tight">صيدليتي</h1>
               <Clock />
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Link to="/settings" onClick={() => setSearchQuery('')} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-              <Settings size={20} />
+          <div className="flex items-center gap-0.5 sm:gap-1">
+            <Link to="/settings" onClick={() => setSearchQuery('')} className="p-1.5 sm:p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+              <Settings size={18} className="sm:w-5 sm:h-5" />
             </Link>
-            <Link to="/deleted" onClick={() => setSearchQuery('')} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-              <Trash2 size={20} />
+            <Link to="/deleted" onClick={() => setSearchQuery('')} className="p-1.5 sm:p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+              <Trash2 size={18} className="sm:w-5 sm:h-5" />
             </Link>
-            <button onClick={toggleTheme} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            <button onClick={toggleTheme} className="p-1.5 sm:p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+              {theme === 'light' ? <Moon size={18} className="sm:w-5 sm:h-5" /> : <Sun size={18} className="sm:w-5 sm:h-5" />}
             </button>
-            <button onClick={toggleLanguage} className="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
-              <Globe size={20} />
+            <button onClick={toggleLanguage} className="p-1.5 sm:p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+              <Globe size={18} className="sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -78,13 +78,13 @@ export default function Layout() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto pb-20 px-4 py-6 max-w-3xl mx-auto w-full">
+      <main className="flex-1 overflow-y-auto pb-24 px-4 py-4 sm:py-6 max-w-3xl mx-auto w-full pl-safe pr-safe">
         <Outlet />
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 fixed bottom-0 w-full pb-safe z-20 transition-colors duration-200">
-        <div className="flex justify-around items-center h-16 max-w-3xl mx-auto">
+      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 fixed bottom-0 w-full pb-safe z-20 transition-colors duration-200 pl-safe pr-safe">
+        <div className="flex justify-between items-center h-14 sm:h-16 max-w-3xl mx-auto px-1 sm:px-2">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -96,8 +96,8 @@ export default function Layout() {
                 }`
               }
             >
-              <item.icon size={24} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <item.icon size={20} className="sm:w-6 sm:h-6" />
+              <span className="text-[9px] sm:text-[10px] font-medium text-center leading-tight px-0.5">{item.label}</span>
             </NavLink>
           ))}
         </div>

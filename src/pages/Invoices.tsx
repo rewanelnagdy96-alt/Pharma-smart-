@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, where, orderBy, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc, where, orderBy, getDocs, writeBatch } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useTranslation, useAppStore } from '../lib/i18n';
 import { Company, Invoice } from '../models/types';
-import { Plus, ChevronLeft, ChevronRight, Building2, FileText, Camera, Image as ImageIcon } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, Building2, FileText, Camera, Edit2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Invoices() {
@@ -23,6 +23,10 @@ export default function Invoices() {
   const [itemsList, setItemsList] = useState<{name: string, form: string}[]>([{name: '', form: ''}]);
   const [image, setImage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Edit State
+  const [editingCompanyId, setEditingCompanyId] = useState<string | null>(null);
+  const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(
@@ -59,24 +63,67 @@ export default function Invoices() {
     return () => unsubscribe();
   }, [selectedCompany]);
 
-  const handleAddCompany = async (e: React.FormEvent) => {
+  const handleAddOrUpdateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!companyName.trim()) return;
     
     try {
-      const company: Company = {
-        name: companyName.trim(),
-        authorUid: auth.currentUser?.uid || 'local-user',
-        createdAt: new Date().toISOString()
-      };
-      await addDoc(collection(db, 'companies'), company);
-      toast.success(t('save') + ' ✓');
+      if (editingCompanyId) {
+        await updateDoc(doc(db, 'companies', editingCompanyId), {
+          name: companyName.trim()
+        });
+        toast.success(t('update') + ' ✓');
+        if (selectedCompany?.id === editingCompanyId) {
+          setSelectedCompany(prev => prev ? { ...prev, name: companyName.trim() } : null);
+        }
+      } else {
+        const company: Company = {
+          name: companyName.trim(),
+          authorUid: auth.currentUser?.uid || 'local-user',
+          createdAt: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'companies'), company);
+        toast.success(t('save') + ' ✓');
+      }
       setShowAddCompany(false);
+      setEditingCompanyId(null);
       setCompanyName('');
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'companies');
-      toast.error('Error adding company');
+      handleFirestoreError(error, editingCompanyId ? OperationType.UPDATE : OperationType.CREATE, 'companies');
+      toast.error('Error saving company');
     }
+  };
+
+  const handleDeleteCompany = async (e: React.MouseEvent, company: Company) => {
+    e.stopPropagation();
+    if (!window.confirm(t('confirmDelete') || 'Are you sure?')) return;
+    
+    try {
+      // Delete all invoices for this company first
+      const invoicesSnapshot = await getDocs(query(collection(db, 'invoices'), where('companyId', '==', company.id)));
+      const batch = writeBatch(db);
+      invoicesSnapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      
+      // Then delete the company
+      await deleteDoc(doc(db, 'companies', company.id!));
+      toast.success(t('deleted'));
+      if (selectedCompany?.id === company.id) {
+        setSelectedCompany(null);
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `companies/${company.id}`);
+      toast.error('Error deleting company');
+    }
+  };
+
+  const handleEditCompanyClick = (e: React.MouseEvent, company: Company) => {
+    e.stopPropagation();
+    setEditingCompanyId(company.id!);
+    setCompanyName(company.name);
+    setShowAddCompany(true);
   };
 
   const compressImage = (file: File): Promise<string> => {
@@ -125,7 +172,7 @@ export default function Invoices() {
     }
   };
 
-  const handleAddInvoice = async (e: React.FormEvent) => {
+  const handleAddOrUpdateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCompany) return;
     
@@ -138,51 +185,82 @@ export default function Invoices() {
     
     setIsSubmitting(true);
     try {
-      const invoice: Invoice = {
-        companyId: selectedCompany.id!,
-        imageUrl: image,
-        items: validItems.map(i => ({ name: i.name.trim(), form: i.form || undefined })),
-        authorUid: auth.currentUser?.uid || 'local-user',
-        createdAt: new Date().toISOString()
-      };
-      
-      await addDoc(collection(db, 'invoices'), invoice);
-      
-      // Auto-remove from shortages
-      if (validItems.length > 0) {
-        const shortagesSnapshot = await getDocs(
-          query(collection(db, 'shortages'))
-        );
-        
-        const batch = writeBatch(db);
-        let deletedCount = 0;
-        
-        shortagesSnapshot.forEach(doc => {
-          const shortageName = doc.data().medicineName.toLowerCase();
-          if (validItems.some(item => 
-            shortageName.includes(item.name.toLowerCase()) || 
-            item.name.toLowerCase().includes(shortageName)
-          )) {
-            batch.delete(doc.ref);
-            deletedCount++;
-          }
+      if (editingInvoiceId) {
+        await updateDoc(doc(db, 'invoices', editingInvoiceId), {
+          imageUrl: image,
+          items: validItems.map(i => ({ name: i.name.trim(), form: i.form || undefined }))
         });
+        toast.success(t('update') + ' ✓');
+      } else {
+        const invoice: Invoice = {
+          companyId: selectedCompany.id!,
+          imageUrl: image,
+          items: validItems.map(i => ({ name: i.name.trim(), form: i.form || undefined })),
+          authorUid: auth.currentUser?.uid || 'local-user',
+          createdAt: new Date().toISOString()
+        };
         
-        if (deletedCount > 0) {
-          await batch.commit();
-          toast.success(t('autoRemoved') + ` (${deletedCount})`);
+        await addDoc(collection(db, 'invoices'), invoice);
+        
+        // Auto-remove from shortages
+        if (validItems.length > 0) {
+          const shortagesSnapshot = await getDocs(
+            query(collection(db, 'shortages'))
+          );
+          
+          const batch = writeBatch(db);
+          let deletedCount = 0;
+          
+          shortagesSnapshot.forEach(doc => {
+            const shortageName = doc.data().medicineName.toLowerCase();
+            if (validItems.some(item => 
+              shortageName.includes(item.name.toLowerCase()) || 
+              item.name.toLowerCase().includes(shortageName)
+            )) {
+              batch.delete(doc.ref);
+              deletedCount++;
+            }
+          });
+          
+          if (deletedCount > 0) {
+            await batch.commit();
+            toast.success(t('autoRemoved') + ` (${deletedCount})`);
+          }
         }
+        toast.success(t('save') + ' ✓');
       }
       
-      toast.success(t('save') + ' ✓');
       setShowAddInvoice(false);
+      setEditingInvoiceId(null);
       setImage(null);
       setItemsList([{name: '', form: ''}]);
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'invoices');
-      toast.error('Error adding invoice');
+      handleFirestoreError(error, editingInvoiceId ? OperationType.UPDATE : OperationType.CREATE, 'invoices');
+      toast.error('Error saving invoice');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    setEditingInvoiceId(invoice.id!);
+    setImage(invoice.imageUrl || null);
+    if (invoice.items && invoice.items.length > 0) {
+      setItemsList(invoice.items.map((i: any) => ({ name: typeof i === 'string' ? i : i.name, form: typeof i === 'string' ? '' : (i.form || '') })));
+    } else {
+      setItemsList([{name: '', form: ''}]);
+    }
+    setShowAddInvoice(true);
+  };
+
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    if (!window.confirm(t('confirmDelete') || 'Are you sure?')) return;
+    try {
+      await deleteDoc(doc(db, 'invoices', invoiceId));
+      toast.success(t('deleted'));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, `invoices/${invoiceId}`);
+      toast.error('Error deleting invoice');
     }
   };
 
@@ -203,7 +281,7 @@ export default function Invoices() {
         </div>
 
         {showAddInvoice && (
-          <form onSubmit={handleAddInvoice} className="bg-white dark:bg-slate-800 p-6 rounded-[24px] shadow-soft border-none space-y-4 mb-6">
+          <form onSubmit={handleAddOrUpdateInvoice} className="bg-white dark:bg-slate-800 p-6 rounded-[24px] shadow-soft border-none space-y-4 mb-6">
             
             <div className="flex items-center justify-center w-full">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-[#D0E1FD] border-dashed rounded-2xl cursor-pointer bg-[#F8FAFF] dark:hover:bg-slate-800 dark:bg-slate-900 hover:bg-[#E6E6FA] dark:border-slate-600 dark:hover:border-slate-500 transition-colors overflow-hidden relative">
@@ -258,15 +336,15 @@ export default function Invoices() {
               <Plus size={16} /> {t('addAnotherItem')}
             </button>
             
-            {itemsList.some(i => i.name.trim()) && (
+            {itemsList.some(i => i.name.trim()) && !editingInvoiceId && (
               <p className="text-xs text-[#D0E1FD] dark:text-emerald-400 font-medium">
                 {t('autoRemoved')}
               </p>
             )}
 
             <div className="flex justify-end gap-3 pt-2">
-              <button type="button" onClick={() => setShowAddInvoice(false)} className="px-5 py-3 text-[#90A4CE] dark:text-slate-400 font-medium hover:bg-[#F8FAFF] dark:hover:bg-slate-700 rounded-xl transition-colors">{t('cancel')}</button>
-              <button type="submit" disabled={isSubmitting} className="px-6 py-3 bg-[#1E293B] hover:bg-slate-800 text-white font-medium rounded-xl transition-colors disabled:opacity-50">{t('add')}</button>
+              <button type="button" onClick={() => { setShowAddInvoice(false); setEditingInvoiceId(null); setImage(null); setItemsList([{name: '', form: ''}]); }} className="px-5 py-3 text-[#90A4CE] dark:text-slate-400 font-medium hover:bg-[#F8FAFF] dark:hover:bg-slate-700 rounded-xl transition-colors">{t('cancel')}</button>
+              <button type="submit" disabled={isSubmitting} className="px-6 py-3 bg-[#1E293B] hover:bg-slate-800 text-white font-medium rounded-xl transition-colors disabled:opacity-50">{editingInvoiceId ? t('update') : t('add')}</button>
             </div>
           </form>
         )}
@@ -283,6 +361,14 @@ export default function Invoices() {
                       hour: '2-digit', minute: '2-digit'
                     })}
                   </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => handleEditInvoice(invoice)} className="text-[#90A4CE] hover:text-blue-500 transition-colors p-1">
+                    <Edit2 size={18} />
+                  </button>
+                  <button onClick={() => handleDeleteInvoice(invoice.id!)} className="text-[#90A4CE] hover:text-rose-500 transition-colors p-1">
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
               
@@ -319,7 +405,7 @@ export default function Invoices() {
         </div>
 
         <button
-          onClick={() => setShowAddInvoice(true)}
+          onClick={() => { setShowAddInvoice(true); setEditingInvoiceId(null); setImage(null); setItemsList([{name: '', form: ''}]); }}
           className="fixed bottom-24 right-6 w-14 h-14 bg-[#D0E1FD] hover:bg-[#B0C4DE] text-[#1E293B] rounded-2xl shadow-soft flex items-center justify-center transition-transform active:scale-95 z-10"
         >
           <Plus size={28} />
@@ -334,14 +420,14 @@ export default function Invoices() {
       <h2 className="text-3xl font-bold text-[#1E293B] dark:text-white mb-6">{t('invoices')}</h2>
 
       {showAddCompany && (
-        <form onSubmit={handleAddCompany} className="bg-white dark:bg-slate-800 p-6 rounded-[24px] shadow-soft border-none space-y-4 mb-6">
+        <form onSubmit={handleAddOrUpdateCompany} className="bg-white dark:bg-slate-800 p-6 rounded-[24px] shadow-soft border-none space-y-4 mb-6">
           <input
             type="text" placeholder={t('companyName')} value={companyName} onChange={e => setCompanyName(e.target.value)}
             className="w-full bg-[#F8FAFF] dark:bg-slate-900 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-[#D0E1FD] outline-none dark:text-white transition-colors shadow-inner" required
           />
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={() => setShowAddCompany(false)} className="px-5 py-3 text-[#90A4CE] dark:text-slate-400 font-medium hover:bg-[#F8FAFF] dark:hover:bg-slate-700 rounded-xl transition-colors">{t('cancel')}</button>
-            <button type="submit" className="px-6 py-3 bg-[#1E293B] hover:bg-slate-800 text-white font-medium rounded-xl transition-colors">{t('add')}</button>
+            <button type="button" onClick={() => { setShowAddCompany(false); setEditingCompanyId(null); setCompanyName(''); }} className="px-5 py-3 text-[#90A4CE] dark:text-slate-400 font-medium hover:bg-[#F8FAFF] dark:hover:bg-slate-700 rounded-xl transition-colors">{t('cancel')}</button>
+            <button type="submit" className="px-6 py-3 bg-[#1E293B] hover:bg-slate-800 text-white font-medium rounded-xl transition-colors">{editingCompanyId ? t('update') : t('add')}</button>
           </div>
         </form>
       )}
@@ -351,8 +437,22 @@ export default function Invoices() {
           <div 
             key={company.id} 
             onClick={() => setSelectedCompany(company)}
-            className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-soft border-none flex flex-col items-center justify-center gap-4 cursor-pointer hover:shadow-md transition-all text-center h-36"
+            className="bg-white dark:bg-slate-800 p-5 rounded-[24px] shadow-soft border-none flex flex-col items-center justify-center gap-4 cursor-pointer hover:shadow-md transition-all text-center h-36 relative group"
           >
+            <div className="absolute top-2 right-2 flex gap-1">
+              <button 
+                onClick={(e) => handleEditCompanyClick(e, company)}
+                className="p-1.5 bg-slate-50 dark:bg-slate-700/50 text-slate-400 hover:text-blue-500 rounded-lg transition-colors"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button 
+                onClick={(e) => handleDeleteCompany(e, company)}
+                className="p-1.5 bg-slate-50 dark:bg-slate-700/50 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
             <div className="w-14 h-14 rounded-2xl bg-[#F8FAFF] dark:bg-slate-700 text-[#1E293B] dark:text-slate-300 flex items-center justify-center shadow-inner">
               <Building2 size={28} />
             </div>
@@ -368,7 +468,7 @@ export default function Invoices() {
       )}
 
       <button
-        onClick={() => setShowAddCompany(true)}
+        onClick={() => { setShowAddCompany(true); setEditingCompanyId(null); setCompanyName(''); }}
         className="fixed bottom-24 right-6 w-14 h-14 bg-[#D0E1FD] hover:bg-[#B0C4DE] text-[#1E293B] rounded-2xl shadow-soft flex items-center justify-center transition-transform active:scale-95 z-10"
       >
         <Plus size={28} />

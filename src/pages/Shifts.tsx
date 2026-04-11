@@ -146,17 +146,17 @@ export default function Shifts() {
   return (
     <div className="space-y-4 relative min-h-[80vh]">
       <div className="flex justify-between items-end mb-4">
-        <div>
+        <div className="flex-1">
           <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">{t('shifts')}</h2>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <div className="relative max-w-[160px]">
+            <div className={`absolute inset-y-0 ${isRtl ? 'right-0 pr-3' : 'left-0 pl-3'} flex items-center pointer-events-none`}>
               <Calendar className="h-4 w-4 text-slate-400" />
             </div>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2 ${isRtl ? 'pr-10' : 'pl-10'}`}
+              className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2 ${isRtl ? 'pr-10 pl-2' : 'pl-10 pr-2'} text-center`}
             />
           </div>
         </div>

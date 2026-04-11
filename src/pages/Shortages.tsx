@@ -3,8 +3,7 @@ import { collection, query, onSnapshot, updateDoc, doc, where, orderBy, addDoc, 
 import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useTranslation, useAppStore } from '../lib/i18n';
 import { Shortage } from '../models/types';
-import { CheckCircle2, Sparkles, Loader2, Plus, Trash2, AlertCircle } from 'lucide-react';
-import { suggestAlternatives } from '../lib/gemini';
+import { CheckCircle2, Plus, Trash2, AlertCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -20,9 +19,6 @@ export default function Shortages() {
   const [itemForm, setItemForm] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
   const [formCategory, setFormCategory] = useState<'medicine' | 'supply'>('medicine');
-
-  const [loadingAlternatives, setLoadingAlternatives] = useState<string | null>(null);
-  const [alternatives, setAlternatives] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     const q = query(
@@ -97,19 +93,6 @@ export default function Shortages() {
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `shortages/${id}`);
       toast.error('Failed to update');
-    }
-  };
-
-  const handleSuggestAlternatives = async (id: string, medicineName: string) => {
-    if (alternatives[id]) return;
-    setLoadingAlternatives(id);
-    try {
-      const alts = await suggestAlternatives(medicineName);
-      setAlternatives(prev => ({ ...prev, [id]: alts }));
-    } catch (error) {
-      toast.error('Failed to load alternatives');
-    } finally {
-      setLoadingAlternatives(null);
     }
   };
 
@@ -239,60 +222,28 @@ export default function Shortages() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className={`bg-white dark:bg-slate-800 p-3 rounded-xl shadow-sm border ${shortage.isUrgent ? 'border-rose-200 dark:border-rose-900/50' : 'border-slate-100 dark:border-slate-700'}`}
+                    className={`bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border ${shortage.isUrgent ? 'border-rose-200 dark:border-rose-900/50' : 'border-slate-100 dark:border-slate-700'}`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-sm text-slate-800 dark:text-white">
+                        <h4 className="font-bold text-base sm:text-lg text-slate-800 dark:text-white">
                           {shortage.medicineName}
-                          {shortage.form && <span className="text-xs font-normal text-slate-500 ml-1">({t(shortage.form as any)})</span>}
+                          {shortage.form && <span className="text-sm font-medium text-slate-500 ml-2">({t(shortage.form as any)})</span>}
                         </h4>
-                        {shortage.isUrgent && <span className="bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md">{t('urgent')}</span>}
+                        {shortage.isUrgent && <span className="bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-bold px-2 py-0.5 rounded-md">{t('urgent')}</span>}
                       </div>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => handleDeleteDirectly(shortage)} className="text-slate-400 hover:text-rose-500 p-1.5 transition-colors">
-                          <Trash2 size={16} />
+                        <button onClick={() => handleDeleteDirectly(shortage)} className="text-slate-400 hover:text-rose-500 p-2 transition-colors">
+                          <Trash2 size={18} />
                         </button>
                         <button
                           onClick={() => handleMarkAvailable(shortage.id!)}
-                          className="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 p-1.5 rounded-lg transition-colors"
+                          className="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 p-2 rounded-lg transition-colors"
                         >
-                          <CheckCircle2 size={16} />
+                          <CheckCircle2 size={18} />
                         </button>
                       </div>
                     </div>
-                    
-                    {activeTab === 'medicine' && (
-                      <div className="mt-2">
-                        {alternatives[shortage.id!] ? (
-                          <div className="space-y-1.5 pt-2 border-t border-slate-50 dark:border-slate-700/50">
-                            <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                              <Sparkles size={12} className="text-blue-500" /> {t('alternatives')}
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {alternatives[shortage.id!].map((alt, idx) => (
-                                <span key={idx} className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] px-2 py-0.5 rounded-md font-medium border border-blue-100 dark:border-blue-800/50">
-                                  {alt}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleSuggestAlternatives(shortage.id!, shortage.medicineName)}
-                            disabled={loadingAlternatives === shortage.id}
-                            className="text-blue-600 dark:text-blue-400 text-[11px] font-medium flex items-center gap-1 hover:text-blue-700 dark:hover:text-blue-300 transition-colors mt-1"
-                          >
-                            {loadingAlternatives === shortage.id ? (
-                              <Loader2 size={12} className="animate-spin" />
-                            ) : (
-                              <Sparkles size={12} />
-                            )}
-                            {t('suggestAlternatives')}
-                          </button>
-                        )}
-                      </div>
-                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>

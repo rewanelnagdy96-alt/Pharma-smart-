@@ -137,28 +137,28 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"
+          className="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"
         >
           <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-              <TrendingUp size={20} />
-              <span className="font-medium text-sm">{t('totalSales')}</span>
+            <div className="flex items-center gap-1.5 sm:gap-2 text-emerald-600 dark:text-emerald-400">
+              <TrendingUp size={18} className="sm:w-5 sm:h-5 shrink-0" />
+              <span className="font-medium text-xs sm:text-sm truncate">{t('totalSales')}</span>
             </div>
             <button 
               onClick={() => isManagerUnlocked ? setManagerUnlocked(false) : setShowPinModal(true)}
-              className="text-slate-400 hover:text-emerald-500 transition-colors"
+              className="text-slate-400 hover:text-emerald-500 transition-colors shrink-0 ml-1"
             >
-              {isManagerUnlocked ? <Unlock size={16} /> : <Lock size={16} />}
+              {isManagerUnlocked ? <Unlock size={14} className="sm:w-4 sm:h-4" /> : <Lock size={14} className="sm:w-4 sm:h-4" />}
             </button>
           </div>
-          <p className="text-2xl font-bold text-slate-800 dark:text-white">
+          <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white truncate">
             {isManagerUnlocked ? (
-              <>{dailySales.toLocaleString()} <span className="text-sm text-slate-500">{t('currency')}</span></>
+              <>{dailySales.toLocaleString()} <span className="text-xs sm:text-sm text-slate-500">{t('currency')}</span></>
             ) : (
               <span className="text-slate-400 tracking-widest">****</span>
             )}
@@ -168,13 +168,13 @@ export default function Dashboard() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"
+          className="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"
         >
-          <div className="flex items-center gap-2 text-rose-500 dark:text-rose-400 mb-2">
-            <AlertCircle size={20} />
-            <span className="font-medium text-sm">{t('shortageAlerts')}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-rose-500 dark:text-rose-400 mb-2">
+            <AlertCircle size={18} className="sm:w-5 sm:h-5 shrink-0" />
+            <span className="font-medium text-xs sm:text-sm truncate">{t('shortageAlerts')}</span>
           </div>
-          <p className="text-2xl font-bold text-slate-800 dark:text-white">{shortagesCount}</p>
+          <p className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white">{shortagesCount}</p>
         </motion.div>
       </div>
 
@@ -183,9 +183,9 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"
+        className="bg-white dark:bg-slate-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700"
       >
-        <h3 className="font-semibold text-slate-800 dark:text-white mb-4">{t('addShortage')}</h3>
+        <h3 className="font-semibold text-slate-800 dark:text-white mb-3 sm:mb-4 text-sm sm:text-base">{t('addShortage')}</h3>
         <form onSubmit={handleQuickLog} className="space-y-3">
           <div className="flex gap-2">
             <input
@@ -193,29 +193,29 @@ export default function Dashboard() {
               value={newShortage}
               onChange={(e) => setNewShortage(e.target.value)}
               placeholder={t('medicineName')}
-              className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all dark:text-white"
+              className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 sm:px-4 py-2 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all dark:text-white"
               disabled={isSubmitting}
             />
             <button
               type="submit"
               disabled={isSubmitting || !newShortage.trim()}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-4 py-2 transition-colors disabled:opacity-50 flex items-center justify-center"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl px-3 sm:px-4 py-2 transition-colors disabled:opacity-50 flex items-center justify-center shrink-0"
             >
-              <Plus size={24} />
+              <Plus size={20} className="sm:w-6 sm:h-6" />
             </button>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setCategory('medicine')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${category === 'medicine' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400'}`}
+              className={`flex-1 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors ${category === 'medicine' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400'}`}
             >
               {t('medicines')}
             </button>
             <button
               type="button"
               onClick={() => setCategory('supply')}
-              className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${category === 'supply' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400'}`}
+              className={`flex-1 py-2 px-2 sm:px-3 rounded-lg text-xs sm:text-sm font-medium transition-colors ${category === 'supply' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-400'}`}
             >
               {t('supplies')}
             </button>

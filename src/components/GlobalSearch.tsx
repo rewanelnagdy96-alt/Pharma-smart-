@@ -131,14 +131,14 @@ export default function GlobalSearch() {
 
   return (
     <div className="relative" ref={wrapperRef}>
-      <Search className={`absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRtl ? 'right-4' : 'left-4'}`} size={20} />
+      <Search className={`absolute top-1/2 -translate-y-1/2 text-slate-400 ${isRtl ? 'right-3 sm:right-4' : 'left-3 sm:left-4'}`} size={18} />
       <input
         type="text"
         placeholder="ابحث عن عميل، مديونية، فاتورة، أو دواء..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         onFocus={() => setIsFocused(true)}
-        className={`w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-white transition-colors ${isRtl ? 'pr-12 pl-4' : 'pl-12 pr-4'}`}
+        className={`w-full bg-slate-100 dark:bg-slate-800 border-none rounded-xl py-2 sm:py-2.5 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 dark:text-white transition-colors ${isRtl ? 'pr-10 sm:pr-12 pl-4' : 'pl-10 sm:pl-12 pr-4'}`}
       />
 
       {/* Suggestions Dropdown */}

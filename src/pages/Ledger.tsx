@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, onSnapshot, addDoc, where, orderBy, writeBatch, doc } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, where, orderBy, writeBatch, doc, deleteDoc } from 'firebase/firestore';
 import { db, auth, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useTranslation, useAppStore } from '../lib/i18n';
 import { Transaction } from '../models/types';
-import { Plus, ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight, Edit2 } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownLeft, ChevronLeft, ChevronRight, Edit2, Trash2 } from 'lucide-react';
 import { convertArabicToEnglishNumbers } from '../lib/utils';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
@@ -79,6 +79,27 @@ export default function Ledger() {
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'transactions');
       toast.error('Error adding transaction');
+    }
+  };
+
+  const handleDeleteEntity = async (e: React.MouseEvent, entityName: string) => {
+    e.stopPropagation();
+    if (!window.confirm(t('confirmDelete') || 'Are you sure?')) return;
+    
+    try {
+      const entityTransactions = transactions.filter(t => t.entityName === entityName);
+      const batch = writeBatch(db);
+      entityTransactions.forEach(trx => {
+        batch.delete(doc(db, 'transactions', trx.id!));
+      });
+      await batch.commit();
+      toast.success(t('deleted'));
+      if (selectedEntity === entityName) {
+        setSelectedEntity(null);
+      }
+    } catch (error) {
+      handleFirestoreError(error, OperationType.DELETE, 'transactions');
+      toast.error('Error deleting');
     }
   };
 
@@ -207,8 +228,26 @@ export default function Ledger() {
                     </p>
                   </div>
                 </div>
-                <div className={`font-bold ${trx.type === 'owe_us' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {trx.type === 'owe_us' ? '+' : '-'}{trx.amount.toFixed(2)} {t('currency')}
+                <div className="flex items-center gap-3">
+                  <div className={`font-bold ${trx.type === 'owe_us' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                    {trx.type === 'owe_us' ? '+' : '-'}{trx.amount.toFixed(2)} {t('currency')}
+                  </div>
+                  <button 
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!window.confirm(t('confirmDelete') || 'Are you sure?')) return;
+                      try {
+                        await deleteDoc(doc(db, 'transactions', trx.id!));
+                        toast.success(t('deleted'));
+                      } catch (error) {
+                        handleFirestoreError(error, OperationType.DELETE, 'transactions');
+                        toast.error('Error deleting');
+                      }
+                    }} 
+                    className="text-slate-400 hover:text-rose-500 transition-colors p-1.5"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </div>
               </motion.div>
             ))}
@@ -338,9 +377,14 @@ export default function Ledger() {
                 <div className={`font-bold ${group.balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                   {group.balance >= 0 ? '+' : '-'}{Math.abs(group.balance).toFixed(2)} {t('currency')}
                 </div>
-                <button onClick={(e) => { e.stopPropagation(); setSelectedEntity(group.name); }} className="text-slate-400 hover:text-emerald-500 transition-colors p-2">
-                  <Edit2 size={18} />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button onClick={(e) => { e.stopPropagation(); setSelectedEntity(group.name); }} className="text-slate-400 hover:text-emerald-500 transition-colors p-1.5">
+                    <Edit2 size={18} />
+                  </button>
+                  <button onClick={(e) => handleDeleteEntity(e, group.name)} className="text-slate-400 hover:text-rose-500 transition-colors p-1.5">
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </div>
             </motion.div>
           ))}
